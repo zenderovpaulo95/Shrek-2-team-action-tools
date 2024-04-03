@@ -30,7 +30,7 @@
         {
             this.extractBtn = new System.Windows.Forms.Button();
             this.importBtn = new System.Windows.Forms.Button();
-            this.listBox1 = new System.Windows.Forms.ListBox();
+            this.listBoxNPC = new System.Windows.Forms.ListBox();
             this.SuspendLayout();
             // 
             // extractBtn
@@ -41,6 +41,7 @@
             this.extractBtn.TabIndex = 0;
             this.extractBtn.Text = "Extract";
             this.extractBtn.UseVisualStyleBackColor = true;
+            this.extractBtn.Click += new System.EventHandler(this.extractBtn_Click);
             // 
             // importBtn
             // 
@@ -51,20 +52,20 @@
             this.importBtn.Text = "Import";
             this.importBtn.UseVisualStyleBackColor = true;
             // 
-            // listBox1
+            // listBoxNPC
             // 
-            this.listBox1.FormattingEnabled = true;
-            this.listBox1.Location = new System.Drawing.Point(13, 71);
-            this.listBox1.Name = "listBox1";
-            this.listBox1.Size = new System.Drawing.Size(775, 368);
-            this.listBox1.TabIndex = 2;
+            this.listBoxNPC.FormattingEnabled = true;
+            this.listBoxNPC.Location = new System.Drawing.Point(13, 71);
+            this.listBoxNPC.Name = "listBoxNPC";
+            this.listBoxNPC.Size = new System.Drawing.Size(775, 368);
+            this.listBoxNPC.TabIndex = 2;
             // 
             // npcForm
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.ClientSize = new System.Drawing.Size(800, 450);
-            this.Controls.Add(this.listBox1);
+            this.Controls.Add(this.listBoxNPC);
             this.Controls.Add(this.importBtn);
             this.Controls.Add(this.extractBtn);
             this.Name = "npcForm";
@@ -77,6 +78,6 @@
 
         private System.Windows.Forms.Button extractBtn;
         private System.Windows.Forms.Button importBtn;
-        private System.Windows.Forms.ListBox listBox1;
+        private System.Windows.Forms.ListBox listBoxNPC;
     }
 }

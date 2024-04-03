@@ -64,6 +64,7 @@
     <Compile Include="npcForm.Designer.cs">
       <DependentUpon>npcForm.cs</DependentUpon>
     </Compile>
+    <Compile Include="OtherMethods.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="resForm.cs">
