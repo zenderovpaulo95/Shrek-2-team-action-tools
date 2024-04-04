@@ -292,7 +292,9 @@ namespace Shrek_2_team_action_tools
 
             if(npcFI.Length > 0 && txtFI.Length > 0)
             {
-                for(int i = 0; i < npcFI.Length; i++)
+                listBoxNPC.Items.Clear();
+
+                for (int i = 0; i < npcFI.Length; i++)
                 {
                     for(int j = 0; j < txtFI.Length; j++)
                     {
