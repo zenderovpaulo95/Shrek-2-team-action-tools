@@ -28,6 +28,7 @@
         /// </summary>
         private void InitializeComponent()
         {
+            System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(MainForm));
             this.npcToolBtn = new System.Windows.Forms.Button();
             this.resToolBtn = new System.Windows.Forms.Button();
             this.fontEditorBtn = new System.Windows.Forms.Button();
@@ -84,6 +85,7 @@
             this.Controls.Add(this.resToolBtn);
             this.Controls.Add(this.npcToolBtn);
             this.FormBorderStyle = System.Windows.Forms.FormBorderStyle.FixedSingle;
+            this.Icon = ((System.Drawing.Icon)(resources.GetObject("$this.Icon")));
             this.MaximizeBox = false;
             this.Name = "MainForm";
             this.Text = "Shrek 2 team action tools";

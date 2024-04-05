@@ -28,6 +28,7 @@
         /// </summary>
         private void InitializeComponent()
         {
+            System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(npcForm));
             this.extractBtn = new System.Windows.Forms.Button();
             this.importBtn = new System.Windows.Forms.Button();
             this.listBoxNPC = new System.Windows.Forms.ListBox();
@@ -69,6 +70,9 @@
             this.Controls.Add(this.listBoxNPC);
             this.Controls.Add(this.importBtn);
             this.Controls.Add(this.extractBtn);
+            this.FormBorderStyle = System.Windows.Forms.FormBorderStyle.FixedSingle;
+            this.Icon = ((System.Drawing.Icon)(resources.GetObject("$this.Icon")));
+            this.MaximizeBox = false;
             this.Name = "npcForm";
             this.Text = "NPC text extractor/importer";
             this.ResumeLayout(false);
