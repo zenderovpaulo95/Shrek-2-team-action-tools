@@ -51,6 +51,7 @@
             this.importBtn.TabIndex = 1;
             this.importBtn.Text = "Import";
             this.importBtn.UseVisualStyleBackColor = true;
+            this.importBtn.Click += new System.EventHandler(this.importBtn_Click);
             // 
             // listBoxRES
             // 

@@ -149,5 +149,114 @@ namespace Shrek_2_team_action_tools
                 }
             }
         }
+
+        private void importXPR0(xproFormat format, FileInfo resFI, FileInfo pngFI)
+        {
+            byte[] file = File.ReadAllBytes(resFI.FullName);
+            byte[] rawData = null;
+
+            Image img = Bitmap.FromFile(pngFI.FullName);
+
+            if(img.PixelFormat != PixelFormat.Format32bppArgb)
+            {
+                AddNewReport("File " + resFI.Name + ": " + pngFI.Name + ": bitmap must be ARGB8888!");
+                return;
+            }
+
+            if(img.Width != format.width || img.Height != format.height)
+            {
+                AddNewReport("File " + resFI.Name + ": " + pngFI.Name + " has incorrect width and height!");
+                return;
+            }
+
+            using (MemoryStream ms = new MemoryStream())
+            {
+                img.RotateFlip(RotateFlipType.RotateNoneFlipY);
+                img.Save(ms, ImageFormat.Bmp);
+                rawData = ms.ToArray();
+            }
+
+            File.WriteAllBytes(MainForm.settings.outputPath + Path.DirectorySeparatorChar + "test.bmp", rawData);
+
+            byte[] tmp = new byte[4];
+            Array.Copy(rawData, 10, tmp, 0, tmp.Length);
+            int offset = BitConverter.ToInt32(tmp, 0);
+
+            if(rawData.Length - offset != format.fileSize - format.textureOffset)
+            {
+                AddNewReport("File " + resFI.Name + " has incorrect size compare with " + pngFI.Name);
+                return;
+            }
+
+            img.Dispose();
+
+            Array.Copy(rawData, offset, file, format.textureOffset, rawData.Length - offset);
+
+            if (File.Exists(MainForm.settings.outputPath + Path.DirectorySeparatorChar + resFI.Name)) File.Delete(MainForm.settings.outputPath + Path.DirectorySeparatorChar + resFI.Name);
+
+            File.WriteAllBytes(MainForm.settings.outputPath + Path.DirectorySeparatorChar + resFI.Name, file);
+
+            AddNewReport("File " + resFI + " successfully imported.");
+        }
+
+        private void importDDS(FileInfo ddsFI)
+        {
+            File.Copy(ddsFI.FullName, MainForm.settings.outputPath + Path.DirectorySeparatorChar + ddsFI.Name.Remove(ddsFI.Name.Length - 3, 3) + "res");
+            AddNewReport("File " + ddsFI.Name.Remove(ddsFI.Name.Length - 3, 3) + ".res successfully imported");
+        }
+
+        private void importBtn_Click(object sender, EventArgs e)
+        {
+            DirectoryInfo di = new DirectoryInfo(MainForm.settings.inputPath);
+            var extensions = new[] { "*.png", ".dds" };
+            FileInfo[] fi = di.GetFiles("*.res", SearchOption.AllDirectories);
+            FileInfo[] fi2 = extensions.SelectMany(ext => di.GetFiles(ext, SearchOption.AllDirectories)).ToArray();
+
+            if (fi.Length > 0 && fi2.Length > 0)
+            {
+                listBoxRES.Items.Clear();
+
+                for (int i = 0; i < fi.Length; i++)
+                {
+                    for (int j = 0; j < fi2.Length; j++)
+                    {
+                        if (fi2[j].Name.Remove(fi2[j].Name.Length - 4, 4) == fi[i].Name.Remove(fi[i].Name.Length - 4, 4))
+                        {
+                            int type = getType(fi[i].FullName);
+
+                            switch (type)
+                            {
+                                case 0:
+                                    xproFormat format = getData(fi[i].FullName);
+                                    if (fi2[j].Extension.ToLower() == ".png")
+                                    {
+                                        importXPR0(format, fi[i], fi2[j]);
+                                    }
+                                    else
+                                    {
+                                        AddNewReport("File " + fi[i].Name + " needs a png file to import.");
+                                    }
+                                    break;
+
+                                case 1:
+                                    if (fi2[j].Extension.ToLower() == ".dds")
+                                    {
+                                        importDDS(fi2[j]);
+                                    }
+                                    else
+                                    {
+                                        AddNewReport("File " + fi[i].Name + " needs a dds file to import.");
+                                    }
+                                    break;
+
+                                default:
+                                    AddNewReport("File " + fi[i].Name + ": uknown type");
+                                    break;
+                            }
+                        }
+                    }
+                }
+            }
+        }
     }
 }
