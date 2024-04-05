@@ -255,7 +255,11 @@ namespace Shrek_2_team_action_tools
                 string test = ofd.FileName.Remove(ofd.FileName.Length - 3, 3) + "png";
                 MagickImage image = new MagickImage(test, MagickFormat.Png);
                 image.ColorType = ColorType.PaletteAlpha;
-                image.SetCompression(CompressionMethod.NoCompression);
+                var depth = image.Depth;
+                int res = image.Settings.Depth = 4;
+                depth = image.Depth;
+                image.Settings.ColorType = ColorType.PaletteAlpha;
+                image.Settings.Compression = CompressionMethod.NoCompression;
                 image.Write(ofd.FileName.Remove(ofd.FileName.Length - 3, 3) + "dds", MagickFormat.Dds);
                 /*byte[] res = image.ToByteArray(MagickFormat.Dds);
                 File.WriteAllBytes(ofd.FileName.Remove(ofd.FileName.Length - 3, 3) + "dds", res);*/
