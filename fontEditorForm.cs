@@ -258,6 +258,8 @@ namespace Shrek_2_team_action_tools
                 int res = image.Settings.Depth = 4;
                 image.Settings.ColorType = ColorType.PaletteAlpha;
                 image.Settings.Compression = CompressionMethod.NoCompression;
+                font.texData.data = image.ToByteArray(MagickFormat.Bmp);
+                File.WriteAllBytes(ofd.FileName.Remove(ofd.FileName.Length - 3, 3) + "bmp", font.texData.data);
                 image.Write(ofd.FileName.Remove(ofd.FileName.Length - 3, 3) + "dds", MagickFormat.Dds);
                 /*byte[] res = image.ToByteArray(MagickFormat.Dds);
                 File.WriteAllBytes(ofd.FileName.Remove(ofd.FileName.Length - 3, 3) + "dds", res);*/
