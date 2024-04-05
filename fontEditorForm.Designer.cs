@@ -37,6 +37,8 @@
             this.exitToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.textureGridView = new System.Windows.Forms.DataGridView();
             this.coordinatesGridView = new System.Windows.Forms.DataGridView();
+            this.exportBtn = new System.Windows.Forms.Button();
+            this.importBtn = new System.Windows.Forms.Button();
             this.menuStrip1.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.textureGridView)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.coordinatesGridView)).BeginInit();
@@ -66,26 +68,26 @@
             // openToolStripMenuItem
             // 
             this.openToolStripMenuItem.Name = "openToolStripMenuItem";
-            this.openToolStripMenuItem.Size = new System.Drawing.Size(180, 22);
+            this.openToolStripMenuItem.Size = new System.Drawing.Size(121, 22);
             this.openToolStripMenuItem.Text = "Open";
             this.openToolStripMenuItem.Click += new System.EventHandler(this.openToolStripMenuItem_Click);
             // 
             // saveToolStripMenuItem
             // 
             this.saveToolStripMenuItem.Name = "saveToolStripMenuItem";
-            this.saveToolStripMenuItem.Size = new System.Drawing.Size(180, 22);
+            this.saveToolStripMenuItem.Size = new System.Drawing.Size(121, 22);
             this.saveToolStripMenuItem.Text = "Save";
             // 
             // saveAsToolStripMenuItem
             // 
             this.saveAsToolStripMenuItem.Name = "saveAsToolStripMenuItem";
-            this.saveAsToolStripMenuItem.Size = new System.Drawing.Size(180, 22);
+            this.saveAsToolStripMenuItem.Size = new System.Drawing.Size(121, 22);
             this.saveAsToolStripMenuItem.Text = "Save as...";
             // 
             // exitToolStripMenuItem
             // 
             this.exitToolStripMenuItem.Name = "exitToolStripMenuItem";
-            this.exitToolStripMenuItem.Size = new System.Drawing.Size(180, 22);
+            this.exitToolStripMenuItem.Size = new System.Drawing.Size(121, 22);
             this.exitToolStripMenuItem.Text = "Exit";
             this.exitToolStripMenuItem.Click += new System.EventHandler(this.exitToolStripMenuItem_Click);
             // 
@@ -105,11 +107,33 @@
             this.coordinatesGridView.Size = new System.Drawing.Size(774, 576);
             this.coordinatesGridView.TabIndex = 2;
             // 
+            // exportBtn
+            // 
+            this.exportBtn.Location = new System.Drawing.Point(556, 37);
+            this.exportBtn.Name = "exportBtn";
+            this.exportBtn.Size = new System.Drawing.Size(75, 23);
+            this.exportBtn.TabIndex = 3;
+            this.exportBtn.Text = "Export font";
+            this.exportBtn.UseVisualStyleBackColor = true;
+            this.exportBtn.Click += new System.EventHandler(this.exportBtn_Click);
+            // 
+            // importBtn
+            // 
+            this.importBtn.Location = new System.Drawing.Point(556, 78);
+            this.importBtn.Name = "importBtn";
+            this.importBtn.Size = new System.Drawing.Size(75, 23);
+            this.importBtn.TabIndex = 4;
+            this.importBtn.Text = "Import font";
+            this.importBtn.UseVisualStyleBackColor = true;
+            this.importBtn.Click += new System.EventHandler(this.importBtn_Click);
+            // 
             // fontEditorForm
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.ClientSize = new System.Drawing.Size(799, 707);
+            this.Controls.Add(this.importBtn);
+            this.Controls.Add(this.exportBtn);
             this.Controls.Add(this.coordinatesGridView);
             this.Controls.Add(this.textureGridView);
             this.Controls.Add(this.menuStrip1);
@@ -119,6 +143,7 @@
             this.MaximizeBox = false;
             this.Name = "fontEditorForm";
             this.Text = "Font editor";
+            this.Load += new System.EventHandler(this.fontEditorForm_Load);
             this.menuStrip1.ResumeLayout(false);
             this.menuStrip1.PerformLayout();
             ((System.ComponentModel.ISupportInitialize)(this.textureGridView)).EndInit();
@@ -138,5 +163,7 @@
         private System.Windows.Forms.ToolStripMenuItem exitToolStripMenuItem;
         private System.Windows.Forms.DataGridView textureGridView;
         private System.Windows.Forms.DataGridView coordinatesGridView;
+        private System.Windows.Forms.Button exportBtn;
+        private System.Windows.Forms.Button importBtn;
     }
 }
