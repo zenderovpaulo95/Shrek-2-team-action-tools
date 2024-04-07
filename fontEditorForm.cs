@@ -6,6 +6,7 @@ using System.IO;
 using System.Text;
 using System.Windows.Forms;
 using System.Collections.Generic;
+using System.Linq;
 
 namespace Shrek_2_team_action_tools
 {
@@ -18,6 +19,7 @@ namespace Shrek_2_team_action_tools
 
         FontClass font;
         string fontName;
+        bool edited;
 
         struct texture
         {
@@ -27,10 +29,9 @@ namespace Shrek_2_team_action_tools
             public byte[] data;
         }
 
-        byte[] header = { 0x44, 0x44, 0x53, 0x20, 0x7C, 0x00, 0x00, 0x00, 0x0F, 0x10, 0x00, 0x00, 0xE0, 0x01, 0x00, 0x00, 0x80, 0x02, 0x00, 0x00, 0x00, 0x05, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x01, 0x00, 0x00, 0x00, 0x47, 0x49, 0x4D, 0x50, 0x2D, 0x44, 0x44, 0x53, 0x5C, 0x09, 0x03, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x20, 0x00, 0x00, 0x00, 0x41, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x10, 0x00, 0x00, 0x00, 0x00, 0x0F, 0x00, 0x00, 0xF0, 0x00, 0x00, 0x00, 0x0F, 0x00, 0x00, 0x00, 0x00, 0xF0, 0x00, 0x00, 0x00, 0x10, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 };
-
         struct fntCoordinates
         {
+            public short charNum;
             public short x; //2 bytes
             public short y; //2 bytes
             //next values make from 1 byte
@@ -61,7 +62,7 @@ namespace Shrek_2_team_action_tools
             public FontClass() { }
         }
 
-        private void textureTable()
+        private void textureTable(bool edited)
         {
             textureGridView.ColumnCount = 3;
             textureGridView.RowCount = 1;
@@ -76,9 +77,14 @@ namespace Shrek_2_team_action_tools
             textureGridView.Columns[0].AutoSizeMode = DataGridViewAutoSizeColumnMode.Fill;
             textureGridView.Columns[1].AutoSizeMode = DataGridViewAutoSizeColumnMode.Fill;
             textureGridView.Columns[2].AutoSizeMode = DataGridViewAutoSizeColumnMode.Fill;
+
+            for (int j = 0; j < 3; j++)
+            {
+                textureGridView[j, 0].Style.BackColor = edited ? Color.Bisque : Color.White;
+            }
         }
 
-        private void coordinatesTable()
+        private void coordinatesTable(bool edited)
         {
             coordinatesGridView.ColumnCount = 8;
             coordinatesGridView.RowCount = font.coordsCount;
@@ -98,9 +104,8 @@ namespace Shrek_2_team_action_tools
 
             for (int i = 0; i < font.coordsCount; i++)
             {
-                int code = font.firstCharNum + i;
-                coordinatesGridView.Rows[i].HeaderCell.Value = Convert.ToString(code);
-                coordinatesGridView[0, i].Value = Encoding.GetEncoding(MainForm.settings.ASCII).GetString(BitConverter.GetBytes(code)).Replace("\0", "");
+                coordinatesGridView.Rows[i].HeaderCell.Value = Convert.ToString(font.coordinates[i].charNum);
+                coordinatesGridView[0, i].Value = Encoding.GetEncoding(MainForm.settings.ASCII).GetString(BitConverter.GetBytes(font.coordinates[i].charNum)).Replace("\0", "");
                 coordinatesGridView[1, i].Value = Convert.ToString(font.coordinates[i].x);
                 coordinatesGridView[2, i].Value = Convert.ToString(font.coordinates[i].y);
                 coordinatesGridView[3, i].Value = Convert.ToString(font.coordinates[i].width);
@@ -108,7 +113,56 @@ namespace Shrek_2_team_action_tools
                 coordinatesGridView[5, i].Value = Convert.ToString(font.coordinates[i].xOffset);
                 coordinatesGridView[6, i].Value = Convert.ToString(font.coordinates[i].xAdvance);
                 coordinatesGridView[7, i].Value = Convert.ToString(font.coordinates[i].yOffset);
+
+                for(int j = 0; j < 8; j++)
+                {
+                    coordinatesGridView[j, i].Style.BackColor = edited ? Color.Bisque : Color.White;
+                }
             }
+        }
+
+        private void SaveFont(FontClass font, string fontName)
+        {
+            if(File.Exists(fontName)) File.Delete(fontName);
+
+            FileStream fs = new FileStream(fontName, FileMode.Create);
+            BinaryWriter bw = new BinaryWriter(fs);
+            bw.Write(font.unknown1);
+            bw.Write(font.unknown2);
+            bw.Write(font.textureOffset);
+            bw.Write(font.someData);
+            bw.Write(font.unknown3);
+            byte[] tmp = BitConverter.GetBytes((font.texData.textureSize / 0x1000) - 1);
+            bw.Write(tmp[0]);
+            bw.Write(font.unknown4);
+            tmp = BitConverter.GetBytes((font.coordsCount));
+            bw.Write(tmp[0]);
+            tmp = BitConverter.GetBytes(font.firstCharNum);
+            bw.Write(tmp[0]);
+            bw.Write(font.lineHeight);
+            bw.Write(font.height);
+
+            for(int i = 0; i < font.coordsCount; i++)
+            {
+                bw.Write(font.coordinates[i].x);
+                bw.Write(font.coordinates[i].y);
+                tmp = BitConverter.GetBytes(font.coordinates[i].width);
+                bw.Write(tmp[0]);
+                tmp = BitConverter.GetBytes(font.coordinates[i].xAdvance);
+                bw.Write(tmp[0]);
+                tmp = BitConverter.GetBytes(font.coordinates[i].xOffset);
+                bw.Write(tmp[0]);
+                tmp = BitConverter.GetBytes(font.coordinates[i].yOffset);
+                bw.Write(tmp[0]);
+            }
+
+            tmp = new byte[font.textureOffset - (24 + (font.coordsCount * 8))];
+            tmp = OtherMethods.fillPadded(tmp, tmp.Length, 0);
+            bw.Write(tmp);
+            bw.Write(font.texData.data);
+
+            bw.Close();
+            fs.Close();
         }
 
         private void exitToolStripMenuItem_Click(object sender, EventArgs e)
@@ -161,6 +215,7 @@ namespace Shrek_2_team_action_tools
 
                 for (int i = 0; i < font.coordsCount; i++)
                 {
+                    font.coordinates[i].charNum = (short)(i + font.firstCharNum);
                     font.coordinates[i].x = br.ReadInt16();
                     font.coordinates[i].y = br.ReadInt16();
 
@@ -197,8 +252,10 @@ namespace Shrek_2_team_action_tools
                 br.Close();
                 fs.Close();
 
-                textureTable();
-                coordinatesTable();
+                edited = false;
+
+                textureTable(edited);
+                coordinatesTable(edited);
 
                 saveToolStripMenuItem.Enabled = true;
                 saveAsToolStripMenuItem.Enabled = true;
@@ -259,48 +316,231 @@ namespace Shrek_2_team_action_tools
 
             if (ofd.ShowDialog() == DialogResult.OK) 
             {
-                if (File.Exists(ofd.FileName.Remove(ofd.FileName.Length - 3, 3) + "png"))
+                string[] strs = File.ReadAllLines(ofd.FileName);
+                List<fntCoordinates> newCoords = new List<fntCoordinates>();
+                int count = 0;
+                short lineHeight = 0;
+                short firstChar = 255;
+                short lastChar = 0;
+
+                //Check for xml tags and removing it for comfortable searching needed data (useful for xml fnt files)
+                for (int n = 0; n < strs.Length; n++)
                 {
-                    Image img = Bitmap.FromFile(ofd.FileName.Remove(ofd.FileName.Length - 3, 3) + "png");
-
-                    if (img.Width == 128)
+                    if ((strs[n].IndexOf('<') >= 0) || (strs[n].IndexOf('<') >= 0 && strs[n].IndexOf('/') > 0))
                     {
-                        using (MemoryStream ms = new MemoryStream())
+                        strs[n] = strs[n].Remove(strs[n].IndexOf('<'), 1);
+                        if (strs[n].IndexOf('/') >= 0) strs[n] = strs[n].Remove(strs[n].IndexOf('/'), 1);
+                    }
+                    if (strs[n].IndexOf('>') >= 0 || (strs[n].IndexOf('/') >= 0 && strs[n + 1].IndexOf('>') > 0))
+                    {
+                        strs[n] = strs[n].Remove(strs[n].IndexOf('>'), 1);
+                        if (strs[n].IndexOf('/') >= 0) strs[n] = strs[n].Remove(strs[n].IndexOf('/'), 1);
+                    }
+                    if (strs[n].IndexOf('"') >= 0)
+                    {
+                        while (strs[n].IndexOf('"') >= 0) strs[n] = strs[n].Remove(strs[n].IndexOf('"'), 1);
+                    }
+                }
+
+                for (int m = 0; m < strs.Length; m++)
+                {
+                    if (strs[m].ToLower().Contains("common lineheight"))
+                    {
+                        string[] splitted = strs[m].Split(new char[] { ' ', '=', '\"', ',' });
+                        for (int k = 0; k < splitted.Length; k++)
                         {
-                            img.RotateFlip(RotateFlipType.RotateNoneFlipY);
-                            img.Save(ms, ImageFormat.Bmp);
-                            font.texData.data = ms.ToArray();
-                        }
+                            switch (splitted[k].ToLower())
+                            {
+                                case "lineheight":
+                                    lineHeight = Convert.ToInt16(splitted[k + 1]);
+                                    break;
 
-                        byte[] tmp = new byte[4];
-                        Array.Copy(font.texData.data, 10, tmp, 0, tmp.Length);
-                        int offset = BitConverter.ToInt32(tmp, 0);
-
-                        tmp = new byte[font.texData.data.Length - offset];
-                        Array.Copy(font.texData.data, offset, tmp, 0, tmp.Length);
-
-                        font.texData.data = OtherMethods.argb8888ToArgb4444(tmp, img.Width, img.Height);
-                        font.texData.height = img.Height;
-                        font.texData.textureSize = font.texData.data.Length;
-
-                        string[] strs = File.ReadAllLines(ofd.FileName);
-                        List<fntCoordinates> newCoords = new List<fntCoordinates>();
-
-                        for(int i = 0; i < strs.Length; i++)
-                        {
-
+                                case "pages":
+                                    if (Convert.ToInt16(splitted[k + 1]) != 1)
+                                    {
+                                        MessageBox.Show("Count textures error", "Count of texture is only one!");
+                                        return;
+                                    }
+                                    break;
+                            }
                         }
                     }
-                    else
+                    if (strs[m].Contains("page id"))
                     {
-                        MessageBox.Show("Texture error", "Texture width must be equal 128 pixels!", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                        string[] splitted = strs[m].Split(new char[] { ' ', '=', '\"', ',' });
+                        FileInfo fi = new FileInfo(ofd.FileName);
+
+                        for (int k = 0; k < splitted.Length; k++)
+                        {
+                            if (splitted[k] == "file") {
+                                if (File.Exists(fi.DirectoryName + Path.DirectorySeparatorChar + splitted[k + 1]))
+                                {
+                                    Image img = Bitmap.FromFile(fi.DirectoryName + Path.DirectorySeparatorChar + splitted[k + 1]);
+
+                                    if (img.Width == 128)
+                                    {
+                                        using (MemoryStream ms = new MemoryStream())
+                                        {
+                                            img.RotateFlip(RotateFlipType.RotateNoneFlipY);
+                                            img.Save(ms, ImageFormat.Bmp);
+                                            font.texData.data = ms.ToArray();
+                                        }
+
+                                        byte[] tmp = new byte[4];
+                                        Array.Copy(font.texData.data, 10, tmp, 0, tmp.Length);
+                                        int offset = BitConverter.ToInt32(tmp, 0);
+
+                                        tmp = new byte[font.texData.data.Length - offset];
+                                        Array.Copy(font.texData.data, offset, tmp, 0, tmp.Length);
+
+                                        font.texData.data = OtherMethods.argb8888ToArgb4444(tmp, img.Width, img.Height);
+                                        font.texData.height = img.Height;
+                                        font.texData.textureSize = font.texData.data.Length;
+                                        img.Dispose();
+                                    }
+                                    else
+                                    {
+                                        MessageBox.Show("Texture error", "Texture width must be equal 128 pixels!", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                                        return;
+                                    }
+                                }
+                                else
+                                {
+                                    MessageBox.Show("No png texture", "There is no a PNG texture.", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                                    return;
+                                }
+                            }
+                        }
                     }
-                    img.Dispose();
+                    if (strs[m].Contains("chars count"))
+                    {
+                        string[] splitted = strs[m].Split(new char[] { ' ', '=', '\"', ',' });
+                        for (int k = 0; k < splitted.Length; k++)
+                        {
+                            switch (splitted[k].ToLower())
+                            {
+                                case "count":
+                                    count = Convert.ToInt32(splitted[k + 1]);
+                                    break;
+                            }
+                        }
+                    }
+                    if (strs[m].Contains("char id"))
+                    {
+                        string[] splitted = strs[m].Split(new char[] { ' ', '=', '\"', ',' });
+                        fntCoordinates tmpcoord = new fntCoordinates();
+
+                        for (int k = 0; k < splitted.Length; k++)
+                        {
+                            switch (splitted[k].ToLower())
+                            {
+                                case "id":
+                                    tmpcoord.charNum = Convert.ToInt16(splitted[k + 1]);
+                                    firstChar = tmpcoord.charNum < firstChar ? tmpcoord.charNum : firstChar;
+                                    lastChar = tmpcoord.charNum > lastChar ? tmpcoord.charNum : lastChar;
+                                    break;
+                                case "x":
+                                    tmpcoord.x = Convert.ToInt16(splitted[k + 1]);
+                                    break;
+                                case "y":
+                                    tmpcoord.y = Convert.ToInt16(splitted[k + 1]);
+                                    break;
+                                case "width":
+                                    tmpcoord.width = Convert.ToInt16(splitted[k + 1]);
+                                    break;
+                                case "height":
+                                    tmpcoord.height = Convert.ToInt16(splitted[k + 1]);
+                                    break;
+                                case "xoffset":
+                                    tmpcoord.xOffset = Convert.ToInt16(splitted[k + 1]);
+                                    break;
+                                case "yoffset":
+                                    tmpcoord.yOffset = Convert.ToInt16(splitted[k + 1]);
+                                    break;
+                                case "xadvance":
+                                    tmpcoord.xAdvance = Convert.ToInt16(splitted[k + 1]);
+                                    break;
+                            }
+                        }
+
+                        newCoords.Add(tmpcoord);
+                    }
                 }
-                else
+
+                newCoords.Sort((x, y) => x.charNum.CompareTo(y.charNum));
+                newCoords = newCoords.GroupBy(c => c.charNum).Select(j => j.First()).ToList();
+
+                short ch = firstChar;
+                int i = 0;
+
+                while (ch < lastChar)
                 {
-                    MessageBox.Show("No png texture", "There is no a PNG texture.", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                    if (newCoords[i].charNum != ch)
+                    {
+                        short tmpCh = newCoords[i].charNum > ch ? ch : newCoords[i].charNum;
+                        short tmpMaxCh = newCoords[i].charNum < ch ? ch : newCoords[i].charNum;
+
+                        while (tmpCh != tmpMaxCh)
+                        {
+                            fntCoordinates tmpCoords = new fntCoordinates();
+                            tmpCoords.charNum = tmpCh;
+                            tmpCoords.x = 0;
+                            tmpCoords.y = (short)(font.texData.height + 10);
+                            tmpCoords.width = 0;
+                            tmpCoords.xAdvance = 0;
+                            tmpCoords.height = (short)font.texData.height;
+                            tmpCoords.xOffset = 0;
+                            tmpCoords.yOffset = 0;
+
+                            newCoords.Add(tmpCoords);
+
+                            tmpCh++;
+                            count++;
+                        }
+
+                        ch = tmpCh;
+                    }
+
+                    ch++;
+                    i++;
                 }
+
+                newCoords.Sort((x, y) => x.charNum.CompareTo(y.charNum));
+                newCoords = newCoords.GroupBy(c => c.charNum).Select(j => j.First()).ToList();
+
+                font.coordsCount = count < newCoords.Count ? count : newCoords.Count;
+                font.lineHeight = Convert.ToByte(lineHeight);
+                font.height = Convert.ToByte(lineHeight);
+                font.textureOffset = (uint)(OtherMethods.padSize(24 + (8 * font.coordsCount), 16));
+                font.firstCharNum = firstChar;
+
+                font.coordinates = newCoords.ToArray();
+
+                newCoords.Clear();
+
+                edited = true;
+
+                textureTable(edited);
+                coordinatesTable(edited);
+            }
+        }
+
+        private void saveToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            if(edited && fontName != "")
+            {
+                SaveFont(font, fontName);
+            }
+        }
+
+        private void saveAsToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            SaveFileDialog sfd = new SaveFileDialog();
+            sfd.Filter = "Font file (*.fnt) | *.fnt";
+
+            if(sfd.ShowDialog() == DialogResult.OK)
+            {
+                SaveFont(font, sfd.FileName);
             }
         }
     }

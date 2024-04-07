@@ -48,26 +48,6 @@ namespace Shrek_2_team_action_tools
             public NPCText() { }
         }
 
-        private byte[] fillPadded(string str, int paddedSize)
-        {
-            byte[] tmp = new byte[paddedSize];
-            byte[] binStr = Encoding.GetEncoding(MainForm.settings.ASCII).GetBytes(str);
-            Array.Copy(binStr, 0, tmp, 0, binStr.Length);
-
-            for(int i = binStr.Length; i < paddedSize; i++)
-            {
-                tmp[i] = (byte)'U';
-            }
-
-            return tmp;
-        }
-
-        private int padSize(int size, int pad)
-        {
-            while (size % pad != 0) size++;
-            return size;
-        }
-
         private NPCText readNPC(string fileName)
         {
             FileStream fs = new FileStream(fileName, FileMode.Open);
@@ -227,12 +207,12 @@ namespace Shrek_2_team_action_tools
             {
                 if(i + 1 < npc.count)
                 {
-                    int tmpSize = padSize(npc.texts[i].textLength + 1, 4);
+                    int tmpSize = OtherMethods.padSize(npc.texts[i].textLength + 1, 4);
                     npc.texts[i + 1].textOffset = npc.texts[i].textOffset + tmpSize;
                 }
             }
 
-            npc.offsetBlock = (uint)(npc.texts[npc.count - 1].textOffset + padSize(npc.texts[npc.count - 1].textLength + 1, 16));
+            npc.offsetBlock = (uint)(npc.texts[npc.count - 1].textOffset + OtherMethods.padSize(npc.texts[npc.count - 1].textLength + 1, 16));
 
             if (File.Exists(MainForm.settings.outputPath + Path.DirectorySeparatorChar + npcFI.Name)) File.Delete(MainForm.settings.outputPath + Path.DirectorySeparatorChar + npcFI.Name);
 
@@ -251,11 +231,11 @@ namespace Shrek_2_team_action_tools
 
             for(int i = 0; i < npc.count - 1; i++)
             {
-                tmp = fillPadded(npc.texts[i].translatedText + "\0", padSize(npc.texts[i].translatedText.Length + 1, 4));
+                tmp = OtherMethods.fillPadded(npc.texts[i].translatedText + "\0", OtherMethods.padSize(npc.texts[i].translatedText.Length + 1, 4));
                 bw.Write(tmp);
             }
 
-            tmp = fillPadded(npc.texts[npc.count - 1].translatedText + "\0", padSize(npc.texts[npc.count - 1].translatedText.Length + 1, 16));
+            tmp = OtherMethods.fillPadded(npc.texts[npc.count - 1].translatedText + "\0", OtherMethods.padSize(npc.texts[npc.count - 1].translatedText.Length + 1, 16));
             bw.Write(tmp);
 
             bw.Write(npc.block);

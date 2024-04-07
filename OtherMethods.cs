@@ -1,5 +1,6 @@
 ﻿using System;
 using System.IO;
+using System.Text;
 
 namespace Shrek_2_team_action_tools
 {
@@ -92,6 +93,39 @@ namespace Shrek_2_team_action_tools
             }
 
             return result;
+        }
+
+        public static byte[] fillPadded(string str, int paddedSize)
+        {
+            byte[] tmp = new byte[paddedSize];
+            byte[] binStr = Encoding.GetEncoding(MainForm.settings.ASCII).GetBytes(str);
+            Array.Copy(binStr, 0, tmp, 0, binStr.Length);
+
+            for (int i = binStr.Length; i < paddedSize; i++)
+            {
+                tmp[i] = (byte)'U';
+            }
+
+            return tmp;
+        }
+
+        public static byte[] fillPadded(byte[] block, int paddedSize, int offset)
+        {
+            byte[] tmp = new byte[paddedSize];
+            Array.Copy(block, 0, tmp, 0, block.Length);
+
+            for(int i = offset; i < paddedSize; i++)
+            {
+                tmp[i] = (byte)'U';
+            }
+
+            return tmp;
+        }
+
+        public static int padSize(int size, int pad)
+        {
+            while (size % pad != 0) size++;
+            return size;
         }
     }
 }
