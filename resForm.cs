@@ -1,14 +1,10 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.ComponentModel;
-using System.Data;
 using System.Drawing;
 using System.Drawing.Imaging;
 using System.IO;
 using System.Linq;
 using System.Runtime.InteropServices;
 using System.Text;
-using System.Threading.Tasks;
 using System.Windows.Forms;
 
 namespace Shrek_2_team_action_tools
@@ -175,8 +171,6 @@ namespace Shrek_2_team_action_tools
                 img.Save(ms, ImageFormat.Bmp);
                 rawData = ms.ToArray();
             }
-
-            File.WriteAllBytes(MainForm.settings.outputPath + Path.DirectorySeparatorChar + "test.bmp", rawData);
 
             byte[] tmp = new byte[4];
             Array.Copy(rawData, 10, tmp, 0, tmp.Length);
