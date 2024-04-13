@@ -61,8 +61,28 @@ namespace Shrek_2_team_action_tools
 
             format.width = BitConverter.ToInt32(tmpVal, 0) == 0 ? -1 : (BitConverter.ToInt32(tmpVal, 0) + 1) * 16;
 
+            int size = format.fileSize - (int)format.textureOffset < 0 ? 0 : format.fileSize - (int)format.textureOffset;
+
+            byte tex_format = 0x00;
+
+            if (format.width == -1 && format.height == -1 && size > 0)
+            {
+                br.BaseStream.Seek(25, SeekOrigin.Begin);
+                tex_format = br.ReadByte();
+                byte w = br.ReadByte();
+                byte h = br.ReadByte();
+
+                format.width = (int)Math.Pow(2, (int)((w & 0xF0) >> 4));
+                format.height = (int)Math.Pow(2, (int)h);
+            }
+
             br.BaseStream.Seek(format.textureOffset, SeekOrigin.Begin);
-            format.data = br.ReadBytes(format.fileSize - (int)format.textureOffset);
+            format.data = br.ReadBytes(size);
+
+            if(tex_format != 0x00)
+            {
+                //Need think about gen header!
+            }
 
             br.Close();
             fs.Close();
