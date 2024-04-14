@@ -51,7 +51,7 @@
             this.resToolBtn.Name = "resToolBtn";
             this.resToolBtn.Size = new System.Drawing.Size(259, 23);
             this.resToolBtn.TabIndex = 1;
-            this.resToolBtn.Text = "Res extractor/importer";
+            this.resToolBtn.Text = "RES/TPK extractor/importer";
             this.resToolBtn.UseVisualStyleBackColor = true;
             this.resToolBtn.Click += new System.EventHandler(this.resToolBtn_Click);
             // 

@@ -74,7 +74,7 @@
             this.Icon = ((System.Drawing.Icon)(resources.GetObject("$this.Icon")));
             this.MaximizeBox = false;
             this.Name = "resForm";
-            this.Text = "RES extractor/importer";
+            this.Text = "RES/TPK extractor/importer";
             this.ResumeLayout(false);
 
         }

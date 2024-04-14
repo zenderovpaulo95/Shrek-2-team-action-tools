@@ -108,7 +108,6 @@ namespace Shrek_2_team_action_tools
 
                 MagickImage img = new MagickImage(format.data);
                 img.Settings.Compression = CompressionMethod.NoCompression;
-                //img.Settings.Format = MagickFormat.Raw;
                 MemoryStream ms = new MemoryStream();
                 img.Flip();
                 img.Write(ms, MagickFormat.Bmp);
@@ -449,8 +448,9 @@ namespace Shrek_2_team_action_tools
         private void importBtn_Click(object sender, EventArgs e)
         {
             DirectoryInfo di = new DirectoryInfo(MainForm.settings.inputPath);
-            var extensions = new[] { "*.png", ".dds" };
-            FileInfo[] fi = di.GetFiles("*.res", SearchOption.AllDirectories);
+            var extensions = new[] { "*.png", "*.dds" };
+            var file_extensions = new[] { "*.res", "*.tpk" };
+            FileInfo[] fi = file_extensions.SelectMany(im_ext => di.GetFiles(im_ext, SearchOption.AllDirectories)).ToArray();
             FileInfo[] fi2 = extensions.SelectMany(ext => di.GetFiles(ext, SearchOption.AllDirectories)).ToArray();
 
             if (fi.Length > 0 && fi2.Length > 0)
@@ -459,40 +459,84 @@ namespace Shrek_2_team_action_tools
 
                 for (int i = 0; i < fi.Length; i++)
                 {
-                    for (int j = 0; j < fi2.Length; j++)
+                    if (fi[i].Extension.ToLower() == ".res")
                     {
-                        if (fi2[j].Name.Remove(fi2[j].Name.Length - 4, 4) == fi[i].Name.Remove(fi[i].Name.Length - 4, 4))
+                        for (int j = 0; j < fi2.Length; j++)
                         {
-                            int type = getType(fi[i].FullName);
-
-                            switch (type)
+                            if (fi2[j].Name.Remove(fi2[j].Name.Length - 4, 4) == fi[i].Name.Remove(fi[i].Name.Length - 4, 4))
                             {
-                                case 0:
-                                    xproFormat format = getData(fi[i].FullName);
-                                    if (fi2[j].Extension.ToLower() == ".png")
-                                    {
-                                        importXPR0(format, fi[i], fi2[j]);
-                                    }
-                                    else
-                                    {
-                                        AddNewReport("File " + fi[i].Name + " needs a png file to import.");
-                                    }
-                                    break;
+                                int type = getType(fi[i].FullName);
 
-                                case 1:
-                                    if (fi2[j].Extension.ToLower() == ".dds")
-                                    {
-                                        importDDS(fi2[j]);
-                                    }
-                                    else
-                                    {
-                                        AddNewReport("File " + fi[i].Name + " needs a dds file to import.");
-                                    }
-                                    break;
+                                switch (type)
+                                {
+                                    case 0:
+                                        xproFormat format = getData(fi[i].FullName);
+                                        if (fi2[j].Extension.ToLower() == ".png")
+                                        {
+                                            importXPR0(format, fi[i], fi2[j]);
+                                        }
+                                        else
+                                        {
+                                            AddNewReport("File " + fi[i].Name + " needs a png file to import.");
+                                        }
+                                        break;
 
-                                default:
-                                    AddNewReport("File " + fi[i].Name + ": uknown type");
-                                    break;
+                                    case 1:
+                                        if (fi2[j].Extension.ToLower() == ".dds")
+                                        {
+                                            importDDS(fi2[j]);
+                                        }
+                                        else
+                                        {
+                                            AddNewReport("File " + fi[i].Name + " needs a dds file to import.");
+                                        }
+                                        break;
+
+                                    default:
+                                        AddNewReport("File " + fi[i].Name + ": uknown type");
+                                        break;
+                                }
+                            }
+                        }
+                    }
+                    else
+                    {
+                        //нужно будет поправить
+                        for (int j = 0; j < fi2.Length; j++)
+                        {
+                            if (fi2[j].Name.Remove(fi2[j].Name.Length - 4, 4) == fi[i].Name.Remove(fi[i].Name.Length - 4, 4))
+                            {
+                                int type = getType(fi[i].FullName);
+
+                                switch (type)
+                                {
+                                    case 0:
+                                        xproFormat format = getData(fi[i].FullName);
+                                        if (fi2[j].Extension.ToLower() == ".png")
+                                        {
+                                            importXPR0(format, fi[i], fi2[j]);
+                                        }
+                                        else
+                                        {
+                                            AddNewReport("File " + fi[i].Name + " needs a png file to import.");
+                                        }
+                                        break;
+
+                                    case 1:
+                                        if (fi2[j].Extension.ToLower() == ".dds")
+                                        {
+                                            importDDS(fi2[j]);
+                                        }
+                                        else
+                                        {
+                                            AddNewReport("File " + fi[i].Name + " needs a dds file to import.");
+                                        }
+                                        break;
+
+                                    default:
+                                        AddNewReport("File " + fi[i].Name + ": uknown type");
+                                        break;
+                                }
                             }
                         }
                     }
