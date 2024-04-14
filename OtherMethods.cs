@@ -122,6 +122,62 @@ namespace Shrek_2_team_action_tools
             return tmp;
         }
 
+        public static void getSizeAndKratnost(int width, int height, int code, ref int ddsContentLength, ref int kratnost)
+        {
+            uint w, h = 0;
+
+            ddsContentLength = 0;
+
+            w = (uint)width;
+            h = (uint)height;
+            w = Math.Max(1, w);
+            h = Math.Max(1, h);
+            w <<= 1;
+            h <<= 1;
+
+            if (w > 1) w >>= 1;
+            if (h > 1) h >>= 1;
+
+            switch (code)
+            {
+                /*case 0x00:
+                    ddsContentLength = (int)((w * h) * ClassesStructs.TextureClass.bpps[0]);
+                    kratnost = (int)(w * 4);
+                    break;
+
+                case 0x02: //PVRTC 2bpp
+                case 0x50:
+
+                    break;
+
+                case 0x04: //4444
+                    ddsContentLength = (int)((w * h) * ClassesStructs.TextureClass.bpps[1]);
+                    kratnost = (int)(w * 2);
+                    break;
+
+                case 0x10: //Alpha 8 bit
+                case 0x11: //L8
+                    ddsContentLength = (int)((w * h) * ClassesStructs.TextureClass.bpps[2]);
+                    kratnost = (int)w * 1;
+                    break;
+
+                case 0x25: //32f.32f.32f.32f
+                    ddsContentLength = (int)((w * h) * ClassesStructs.TextureClass.bpps[3]);
+                    kratnost = (int)w * 16;
+                    break;*/
+
+                case 12: //DXT1
+                    ddsContentLength = (int)((((w + 3) >> 2) * ((h + 3) >> 2)) * 8);
+                    kratnost = (int)((w + 3) >> 2) * 8;
+                    break;
+
+                case 15: //DXT5
+                    ddsContentLength = (int)((((w + 3) >> 2) * ((h + 3) >> 2)) * 16);
+                    kratnost = (int)((w + 3) >> 2) * 16;
+                    break;
+            }
+        }
+
         public static int padSize(int size, int pad)
         {
             while (size % pad != 0) size++;
