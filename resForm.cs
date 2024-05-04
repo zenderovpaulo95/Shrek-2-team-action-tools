@@ -506,36 +506,83 @@ namespace Shrek_2_team_action_tools
                         {
                             if (fi2[j].Name.Remove(fi2[j].Name.Length - 4, 4) == fi[i].Name.Remove(fi[i].Name.Length - 4, 4))
                             {
-                                int type = getType(fi[i].FullName);
+                                //Check if tpk file is bmp or dds
+                                FileStream fs = new FileStream(fi[i].FullName, FileMode.Open);
+                                BinaryReader br = new BinaryReader(fs);
+                                byte[] tmp = br.ReadBytes(4);
+                                br.Close();
+                                fs.Close();
 
-                                switch (type)
+                                if (Encoding.ASCII.GetString(tmp) == "DDS ")
                                 {
-                                    case 0:
-                                        xproFormat format = getData(fi[i].FullName);
-                                        if (fi2[j].Extension.ToLower() == ".png")
+                                    if (fi2[j].Extension.ToLower() == ".dds")
+                                    {
+                                        importDDS(fi2[j]);
+                                    }
+                                    else
+                                    {
+                                        AddNewReport("File " + fi[i].Name + " needs a dds file to import.");
+                                    }
+                                }
+                                else
+                                {
+
+                                    fs = new FileStream(fi[i].FullName, FileMode.Open);
+                                    br = new BinaryReader(fs);
+                                    tmp = br.ReadBytes(2);
+                                    int checkSize = br.ReadInt32();
+                                    int fileSize = (int)fs.Length;
+                                    br.Close();
+                                    fs.Close();
+
+                                    if (Encoding.ASCII.GetString(tmp) == "BM" && checkSize == fileSize)
+                                    {
+                                        if (fi2[j].Extension.ToLower() == ".bmp")
                                         {
-                                            importXPR0(format, fi[i], fi2[j]);
+                                            tmp = File.ReadAllBytes(fi2[j].FullName);
+                                            File.WriteAllBytes(MainForm.settings.outputPath + Path.DirectorySeparatorChar + fi[i].Name, tmp);
+                                            AddNewReport("File " + fi[i].Name + " successfully imported.");
                                         }
                                         else
                                         {
-                                            AddNewReport("File " + fi[i].Name + " needs a png file to import.");
+                                            AddNewReport("File " + fi[i].Name + " needs a bmp file to import.");
                                         }
-                                        break;
+                                    }
+                                    else
+                                    {
 
-                                    case 1:
-                                        if (fi2[j].Extension.ToLower() == ".dds")
-                                        {
-                                            importDDS(fi2[j]);
-                                        }
-                                        else
-                                        {
-                                            AddNewReport("File " + fi[i].Name + " needs a dds file to import.");
-                                        }
-                                        break;
+                                        fs = new FileStream(fi[i].FullName, FileMode.Open);
+                                        br = new BinaryReader(fs);
+                                        int count = br.ReadInt32();
+                                        texturePackage[] tp = new texturePackage[count];
 
-                                    default:
-                                        AddNewReport("File " + fi[i].Name + ": uknown type");
-                                        break;
+                                        for (int c = 0; c < count; c++)
+                                        {
+                                            tp[c].index = br.ReadInt32();
+                                            tp[c].offset = br.ReadInt32();
+                                        }
+
+                                        br.Close();
+                                        fs.Close();
+
+                                        FileStream fsw = new FileStream(MainForm.settings.outputPath + Path.DirectorySeparatorChar + fi[i].Name, FileMode.OpenOrCreate);
+                                        BinaryWriter bw = new BinaryWriter(fsw);
+
+                                        for (int c = 0; c < count; c++)
+                                        {
+                                            fs = new FileStream(fi[i].FullName, FileMode.Open);
+                                            br = new BinaryReader(fs);
+
+                                            xproFormat format = getData(fs, tp[c].offset);
+                                            extractXPR0(fi[i].Name, format, c);
+
+                                            br.Close();
+                                            fs.Close();
+                                        }
+
+                                        bw.Close();
+                                        fsw.Close();
+                                    }
                                 }
                             }
                         }
