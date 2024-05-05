@@ -140,32 +140,6 @@ namespace Shrek_2_team_action_tools
 
             switch (code)
             {
-                /*case 0x00:
-                    ddsContentLength = (int)((w * h) * ClassesStructs.TextureClass.bpps[0]);
-                    kratnost = (int)(w * 4);
-                    break;
-
-                case 0x02: //PVRTC 2bpp
-                case 0x50:
-
-                    break;
-
-                case 0x04: //4444
-                    ddsContentLength = (int)((w * h) * ClassesStructs.TextureClass.bpps[1]);
-                    kratnost = (int)(w * 2);
-                    break;
-
-                case 0x10: //Alpha 8 bit
-                case 0x11: //L8
-                    ddsContentLength = (int)((w * h) * ClassesStructs.TextureClass.bpps[2]);
-                    kratnost = (int)w * 1;
-                    break;
-
-                case 0x25: //32f.32f.32f.32f
-                    ddsContentLength = (int)((w * h) * ClassesStructs.TextureClass.bpps[3]);
-                    kratnost = (int)w * 16;
-                    break;*/
-
                 case 12: //DXT1
                     ddsContentLength = (int)((((w + 3) >> 2) * ((h + 3) >> 2)) * 8);
                     kratnost = (int)((w + 3) >> 2) * 8;
@@ -174,6 +148,11 @@ namespace Shrek_2_team_action_tools
                 case 15: //DXT5
                     ddsContentLength = (int)((((w + 3) >> 2) * ((h + 3) >> 2)) * 16);
                     kratnost = (int)((w + 3) >> 2) * 16;
+                    break;
+
+                default: //ARGB8888
+                    ddsContentLength = (int)((w * h) * 4);
+                    kratnost = (int)w * 4;
                     break;
             }
         }

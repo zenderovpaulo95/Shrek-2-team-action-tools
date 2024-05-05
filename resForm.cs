@@ -83,16 +83,15 @@ namespace Shrek_2_team_action_tools
 
             format.width = BitConverter.ToInt32(tmpVal, 0) == 0 && format.textureFormat < 0x12 ? -1 : (BitConverter.ToInt32(tmpVal, 0) + 1) * 16;
 
-            format.textureSize = format.fileSize - (int)format.textureOffset < 0 ? 0 : format.width * format.height * 4; //for argb888
-
             if (format.kratnostWidth > 0 && format.kratnostHeight > 0 && (format.width == -1 || format.height == -1))
             {
                 format.width = (int)Math.Pow(2, format.kratnostWidth);
                 format.height = (int)Math.Pow(2, format.kratnostHeight);
                 format.textureFormat = (int)tf;
-                int kratnost = 0;
-                OtherMethods.getSizeAndKratnost(format.width, format.height, format.textureFormat, ref format.textureSize, ref kratnost);
             }
+
+            int kratnost = 0;
+            OtherMethods.getSizeAndKratnost(format.width, format.height, format.textureFormat, ref format.textureSize, ref kratnost);
 
             br.BaseStream.Seek(offset + format.textureOffset, SeekOrigin.Begin);
             format.data = br.ReadBytes(format.textureSize);
@@ -170,16 +169,15 @@ namespace Shrek_2_team_action_tools
 
             format.width = BitConverter.ToInt32(tmpVal, 0) == 0 && format.textureFormat < 0x12 ? -1 : (BitConverter.ToInt32(tmpVal, 0) + 1) * 16;
 
-            format.textureSize = format.fileSize - (int)format.textureOffset < 0 ? 0 : format.fileSize - (int)format.textureOffset;
-
             if (format.kratnostWidth > 0 && format.kratnostHeight > 0 && (format.width == -1 || format.height == -1))
             {
                 format.width = (int)Math.Pow(2, format.kratnostWidth);
                 format.height = (int)Math.Pow(2, format.kratnostHeight);
                 format.textureFormat = (int)tf;
-                int kratnost = 0;
-                OtherMethods.getSizeAndKratnost(format.width, format.height, format.textureFormat, ref format.textureSize, ref kratnost);
             }
+
+            int kratnost = 0;
+            OtherMethods.getSizeAndKratnost(format.width, format.height, format.textureFormat, ref format.textureSize, ref kratnost);
 
             br.BaseStream.Seek(format.textureOffset, SeekOrigin.Begin);
             format.data = br.ReadBytes(format.textureSize);
@@ -288,7 +286,7 @@ namespace Shrek_2_team_action_tools
                                 break;
 
                             default:
-                                AddNewReport("File " + fi[i].Name + ": uknown type");
+                                AddNewReport("File " + fi[i].Name + ": unknown type");
                                 break;
                         }
                     }
@@ -355,6 +353,102 @@ namespace Shrek_2_team_action_tools
                     }
                 }
             }
+        }
+
+        private void importXPR0(xproFormat format, FileStream fsw, FileInfo tpkFI, string pngFileName, int tpkOffset, int tpkSize, ref int writeOffset)
+        {
+            FileStream fs = new FileStream(tpkFI.FullName, FileMode.Open);
+            fs.Seek(tpkOffset, SeekOrigin.Begin);
+            byte[] file = new byte[tpkSize];
+            fs.Read(file, 0, file.Length);
+            fs.Close();
+            byte[] rawData = null;
+            int size = 0;
+
+            if (pngFileName != "")
+            {
+                FileInfo pngFI = new FileInfo(pngFileName);
+                Image img = Bitmap.FromFile(pngFI.FullName);
+
+                if (img.PixelFormat != PixelFormat.Format32bppArgb)
+                {
+                    fsw.Write(file, 0, file.Length);
+                    writeOffset += file.Length;
+                    AddNewReport("File " + tpkFI.Name + ": " + pngFI.Name + ": bitmap must be ARGB8888! Imported original block from " + tpkFI.Name);
+                    return;
+                }
+
+                if (img.Width != format.width || img.Height != format.height)
+                {
+                    fsw.Write(file, 0, file.Length);
+                    writeOffset += file.Length;
+                    AddNewReport("File " + tpkFI.Name + ": " + pngFI.Name + " has incorrect width and height! Imported original block from " + tpkFI.Name);
+                    return;
+                }
+
+                using (MemoryStream ms = new MemoryStream())
+                {
+                    img.RotateFlip(RotateFlipType.RotateNoneFlipY);
+                    img.Save(ms, ImageFormat.Bmp);
+                    rawData = ms.ToArray();
+
+                    byte[] tmp = new byte[4];
+                    Array.Copy(rawData, 10, tmp, 0, tmp.Length);
+                    int offset = BitConverter.ToInt32(tmp, 0);
+                    size = rawData.Length - offset;
+                    format.data = new byte[size];
+                    Array.Copy(rawData, offset, format.data, 0, size);
+                }
+
+                if (format.textureFormat != 0 && format.textureFormat < 0x12)
+                {
+                    MagickImage mgImg = new MagickImage(rawData);
+
+                    switch (format.textureFormat)
+                    {
+                        case 12:
+                            mgImg.Settings.Compression = CompressionMethod.DXT1;
+                            break;
+
+                        case 15:
+                            mgImg.Settings.Compression = CompressionMethod.DXT5;
+                            break;
+                    }
+
+                    using (MemoryStream ms = new MemoryStream())
+                    {
+                        mgImg.Flip();
+                        mgImg.Write(ms, MagickFormat.Dds);
+                        rawData = ms.ToArray();
+                        int texSize = 0;
+                        int kratnost = 0;
+                        OtherMethods.getSizeAndKratnost(format.width, format.height, format.textureFormat, ref texSize, ref kratnost);
+                        byte[] tmpImg = new byte[texSize];
+                        Array.Copy(rawData, 128, tmpImg, 0, tmpImg.Length);
+                        format.data = new byte[tmpImg.Length];
+                        Array.Copy(tmpImg, 0, format.data, 0, format.data.Length);
+                        size = format.data.Length;
+                    }
+
+                    mgImg.Dispose();
+                    img.Dispose();
+                }
+
+                if ((size > format.fileSize) || (size < 0))
+                {
+                    fsw.Write(file, 0, file.Length);
+                    writeOffset += file.Length;
+                    AddNewReport("File " + tpkFI.Name + " has incorrect size compare with " + pngFI.Name + ". Imported original file from " + tpkFI.Name);
+                    return;
+                }
+
+                img.Dispose();
+
+                Array.Copy(format.data, 0, file, format.textureOffset, format.data.Length);
+            }
+            
+            writeOffset += file.Length;
+            fsw.Write(file, 0, file.Length);
         }
 
         private void importXPR0(xproFormat format, FileInfo resFI, FileInfo pngFI)
@@ -424,7 +518,8 @@ namespace Shrek_2_team_action_tools
                 img.Dispose();
             }
 
-            if(size != format.fileSize - format.textureOffset)
+            //if(size != format.fileSize - format.textureOffset)
+            if ((size > format.fileSize) || (size < 0))
             {
                 AddNewReport("File " + resFI.Name + " has incorrect size compare with " + pngFI.Name);
                 return;
@@ -493,7 +588,7 @@ namespace Shrek_2_team_action_tools
                                         break;
 
                                     default:
-                                        AddNewReport("File " + fi[i].Name + ": uknown type");
+                                        AddNewReport("File " + fi[i].Name + ": unknown type");
                                         break;
                                 }
                             }
@@ -501,45 +596,49 @@ namespace Shrek_2_team_action_tools
                     }
                     else
                     {
-                        //нужно будет поправить
-                        for (int j = 0; j < fi2.Length; j++)
-                        {
-                            if (fi2[j].Name.Remove(fi2[j].Name.Length - 4, 4) == fi[i].Name.Remove(fi[i].Name.Length - 4, 4))
-                            {
-                                //Check if tpk file is bmp or dds
-                                FileStream fs = new FileStream(fi[i].FullName, FileMode.Open);
-                                BinaryReader br = new BinaryReader(fs);
-                                byte[] tmp = br.ReadBytes(4);
-                                br.Close();
-                                fs.Close();
+                        //Check if tpk file is bmp or dds
+                        FileStream fs = new FileStream(fi[i].FullName, FileMode.Open);
+                        BinaryReader br = new BinaryReader(fs);
+                        byte[] tmp = br.ReadBytes(4);
+                        br.Close();
+                        fs.Close();
 
-                                if (Encoding.ASCII.GetString(tmp) == "DDS ")
+                        if (Encoding.ASCII.GetString(tmp) == "DDS ")
+                        {
+                            foreach(FileInfo ddsFI in fi2)
+                            {
+                                if(ddsFI.Name.Remove(ddsFI.Name.Length - 4) == fi[i].Name.Remove(fi[i].Name.Length - 4))
                                 {
-                                    if (fi2[j].Extension.ToLower() == ".dds")
+                                    if (ddsFI.Extension.ToLower() == ".dds")
                                     {
-                                        importDDS(fi2[j]);
+                                        importDDS(ddsFI);
                                     }
                                     else
                                     {
                                         AddNewReport("File " + fi[i].Name + " needs a dds file to import.");
                                     }
                                 }
-                                else
+                            }
+                        }
+                        else if(Encoding.ASCII.GetString(tmp).Substring(0, 2) == "BM") //Check for probably bmp file
+                        {
+                            fs = new FileStream(fi[i].FullName, FileMode.Open);
+                            br = new BinaryReader(fs);
+                            tmp = br.ReadBytes(2);
+                            int checkSize = br.ReadInt32();
+                            int fileSize = (int)fs.Length;
+                            br.Close();
+                            fs.Close();
+
+                            if (Encoding.ASCII.GetString(tmp) == "BM" && checkSize == fileSize)
+                            {
+                                foreach (FileInfo bmpFI in fi2)
                                 {
-
-                                    fs = new FileStream(fi[i].FullName, FileMode.Open);
-                                    br = new BinaryReader(fs);
-                                    tmp = br.ReadBytes(2);
-                                    int checkSize = br.ReadInt32();
-                                    int fileSize = (int)fs.Length;
-                                    br.Close();
-                                    fs.Close();
-
-                                    if (Encoding.ASCII.GetString(tmp) == "BM" && checkSize == fileSize)
+                                    if (bmpFI.Name.Remove(bmpFI.Name.Length - 4) == fi[i].Name.Remove(fi[i].Name.Length - 4))
                                     {
-                                        if (fi2[j].Extension.ToLower() == ".bmp")
+                                        if (bmpFI.Extension.ToLower() == ".bmp")
                                         {
-                                            tmp = File.ReadAllBytes(fi2[j].FullName);
+                                            tmp = File.ReadAllBytes(bmpFI.FullName);
                                             File.WriteAllBytes(MainForm.settings.outputPath + Path.DirectorySeparatorChar + fi[i].Name, tmp);
                                             AddNewReport("File " + fi[i].Name + " successfully imported.");
                                         }
@@ -548,42 +647,77 @@ namespace Shrek_2_team_action_tools
                                             AddNewReport("File " + fi[i].Name + " needs a bmp file to import.");
                                         }
                                     }
-                                    else
-                                    {
-
-                                        fs = new FileStream(fi[i].FullName, FileMode.Open);
-                                        br = new BinaryReader(fs);
-                                        int count = br.ReadInt32();
-                                        texturePackage[] tp = new texturePackage[count];
-
-                                        for (int c = 0; c < count; c++)
-                                        {
-                                            tp[c].index = br.ReadInt32();
-                                            tp[c].offset = br.ReadInt32();
-                                        }
-
-                                        br.Close();
-                                        fs.Close();
-
-                                        FileStream fsw = new FileStream(MainForm.settings.outputPath + Path.DirectorySeparatorChar + fi[i].Name, FileMode.OpenOrCreate);
-                                        BinaryWriter bw = new BinaryWriter(fsw);
-
-                                        for (int c = 0; c < count; c++)
-                                        {
-                                            fs = new FileStream(fi[i].FullName, FileMode.Open);
-                                            br = new BinaryReader(fs);
-
-                                            xproFormat format = getData(fs, tp[c].offset);
-                                            extractXPR0(fi[i].Name, format, c);
-
-                                            br.Close();
-                                            fs.Close();
-                                        }
-
-                                        bw.Close();
-                                        fsw.Close();
-                                    }
                                 }
+                            }
+                        } 
+                        else //Try import files
+                        {
+                            bool modified = false;
+                            fs = new FileStream(fi[i].FullName, FileMode.Open);
+                            br = new BinaryReader(fs);
+
+                            int endOffset = (int)fs.Length;
+                            int count = br.ReadInt32();
+                            texturePackage[] tp = new texturePackage[count];
+
+                            for (int c = 0; c < count; c++)
+                            {
+                                tp[c].index = br.ReadInt32();
+                                tp[c].offset = br.ReadInt32();
+                            }
+
+                            int offset = tp[0].offset;
+
+                            br.Close();
+                            fs.Close();
+
+                            if (File.Exists(MainForm.settings.outputPath + Path.DirectorySeparatorChar + fi[i].Name)) File.Delete(MainForm.settings.outputPath + Path.DirectorySeparatorChar + fi[i].Name);
+                            FileStream fsw = new FileStream(MainForm.settings.outputPath + Path.DirectorySeparatorChar + fi[i].Name, FileMode.CreateNew);
+                            BinaryWriter bw = new BinaryWriter(fsw);
+
+                            tmp = new byte[8 * count];
+                            bw.Write(count);
+                            bw.Write(tmp);
+                            tmp = new byte[tp[0].offset - (4 + (8 * count))];
+                            tmp = OtherMethods.fillPadded(tmp, tmp.Length, 0);
+                            bw.Write(tmp);
+                            int tmpOff = 0;
+                            int tmpHeadOff = 4;
+
+                            for (int c = 0; c < count; c++)
+                            {
+                                fs = new FileStream(fi[i].FullName, FileMode.Open);
+                                br = new BinaryReader(fs);
+
+                                int blockSize = c + 1 < count ? tp[c + 1].offset - tp[c].offset : endOffset - tp[c].offset;
+
+                                string pathName = File.Exists(fi[i].FullName.Remove(fi[i].FullName.Length - 4) + "_" + Convert.ToString(c) + ".png") ? fi[i].FullName.Remove(fi[i].FullName.Length - 4) + "_" + Convert.ToString(c) + ".png" : "";
+                                if(pathName != "" && !modified) modified = true;
+
+                                xproFormat format = getData(fs, tp[c].offset);
+                                importXPR0(format, fsw, fi[i], pathName, tp[c].offset, blockSize, ref offset);
+                                if (c + 1 < count) tp[c + 1].offset = offset;
+                                tmpOff = (int)bw.BaseStream.Position;
+                                bw.BaseStream.Seek(tmpHeadOff, SeekOrigin.Begin);
+                                bw.Write(tp[c].index);
+                                bw.Write(tp[c].offset);
+                                tmpHeadOff += 8;
+                                bw.BaseStream.Seek(tmpOff, SeekOrigin.Begin);
+
+                                br.Close();
+                                fs.Close();
+                            }
+
+                            bw.Close();
+                            fsw.Close();
+
+                            if (modified)
+                            {
+                                AddNewReport("File " + fi[i].Name + " successfully imported.");
+                            } 
+                            else
+                            {
+                                AddNewReport("File " + fi[i].Name + " just copied. Nothing to modify.");
                             }
                         }
                     }
