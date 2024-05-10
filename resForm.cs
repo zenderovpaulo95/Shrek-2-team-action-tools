@@ -485,7 +485,7 @@ namespace Shrek_2_team_action_tools
                 Array.Copy(rawData, offset, format.data, 0, size);
             }
 
-            if (format.textureFormat != 0)
+            if (format.textureFormat != 0 && format.textureFormat < 0x12)
             {
                 MagickImage mgImg = new MagickImage(rawData);
 
